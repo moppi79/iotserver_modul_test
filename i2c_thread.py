@@ -145,10 +145,15 @@ class thread_i2c: #Thread
 	def run(system,chips,in_data,out_data,logger):
 		sensor_ram = ''
 		count = 1
+		print (chips)
 		if 'sensor' in chips:
 			print (chips['sensor'])
 			sensor_ram = {}
 			sensor_ram = chips['sensor']
+			sensor_conf = chips['sensor_update']
+			print (chips['sensor_update'])
+			del chips['sensor_update']
+			
 			del chips['sensor']
 		
 		print (sensor_ram)
@@ -159,6 +164,8 @@ class thread_i2c: #Thread
 			glo_ram[x]['ram']  = chips[x]['ram']
 			glo_ram[x]['class']  = chips[x]['ic_class']
 			glo_ram[x]['ic_name']  = chips[x]['icname']
+			glo_ram[x]['sensor_update']  = 2
+			glo_ram[x]['sensor_update_time']  = 0
 		call = i2c_abruf()
 		
 		chipname_list = {}
@@ -168,7 +175,10 @@ class thread_i2c: #Thread
 			 
 		testcount = 0
 		while True: #Haupt schleife
-			
+			print ('date')
+			timer = datetime.datetime.now()
+			print (timer.second)
+			####HIRT ERIZRT MACHEN !!!!
 			print ('loop thread'+str(count))
 			count = count + 1
 
@@ -200,7 +210,7 @@ class thread_i2c: #Thread
 			#print(in_data.get())
 			
 			
-			time.sleep(0.01)
+			time.sleep(0.1)
 			if count == 60:
 				break
 			
