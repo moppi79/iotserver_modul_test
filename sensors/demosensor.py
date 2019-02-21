@@ -21,7 +21,7 @@ class demosensor():
 		return(ret)
 		
 
-	def out(self,adresse,speicher):
-		
+	def out(self,config):
+		print ('aaa')
 		ret = {'temperature':'22:5', 'humidity':'56,4'}
 		return(ret)

@@ -4,6 +4,9 @@ from multiprocessing import Process, Queue
 from collections import defaultdict
 
 from i2c_thread import thread_i2c, i2c_abruf
+from gpio_thread import thread_gpio, gpio_abruf
+
+import RPi.GPIO as GPIO
 
 config = configparser.ConfigParser()
 config.read('config.py')
@@ -69,7 +72,7 @@ class gpio:
 				call = {}
 				exec("call['"+ x +"'] = "+ x +"_abruf()")
 				install_data = call[x].install(ram['bus_stack'][x][y])
-				#test = i2c_abruf('aa')
+				print (install_data)
 				for z in install_data:
 					if z == 'ram':
 						ram['bus_stack'][x][y]['ram'] = {}
@@ -79,29 +82,52 @@ class gpio:
 					else:
 						self.data_to_iss(z,x,ram['bus_stack'][x][y]['icname'],install_data[z])
 
-						
-		for x in sensor:
-			print ('aaaa')
-			print(sensor[x])
+		data_standart = {}	
+		data_iss = {}
+		sensor_for = 0
+		for x in sensor: #only runs on Sensor entrys 
+			sensor_for = 1
 			b = sensor[x]
 			call = {}
-			print("call['"+ sensor[x]['bus'] +"'] = "+ sensor[x]['bus'] +"_abruf()")
 			exec("call['"+ sensor[x]['bus'] +"'] = "+ sensor[x]['bus'] +"_abruf()")
 			a = call[sensor[x]['bus']].sensor_install(b)
-			for z in a:
-				self.data_to_iss(z,sensor[x]['bus'],'Sensor',a[z])
-				ram['bus_stack'][sensor[x]['bus']]['sensor'] = {}
-			
+			if b['bus'] in data_standart:
+				data_standart[sensor[x]['bus']][x] = {}
+				data_standart[sensor[x]['bus']][x] = a[1]
+			else:
+				data_standart[sensor[x]['bus']] = {}
+				data_standart[sensor[x]['bus']][x] = {}
+				data_standart[sensor[x]['bus']][x] = a[1]
+				
+			ram['bus_stack'][sensor[x]['bus']]['sensor'] = {}
+			data_iss[sensor[x]['bus']] = {}
+			data_iss[sensor[x]['bus']] = a[2]
 			ram['bus_stack'][sensor[x]['bus']]['sensor'][x] = sensor[x]
-			print (ram)
+
 			ram['bus_stack'][sensor[x]['bus']]['sensor_update'] = {}
 			
 			for g in config['sensors']:
 				#print (config['sensors'][x])
 				ram['bus_stack'][sensor[x]['bus']]['sensor_update'][g] = ''
 				ram['bus_stack'][sensor[x]['bus']]['sensor_update'][g] = config['sensors'][g]
+
+		if sensor_for == 1: #sorting Sensor entrays
+			for y in data_standart:
+				for t in data_iss[y]:
+					new_data = {}
+					new_data = data_iss[y][t]
+					new_data['data'] = {}
+					new_data['data'] = data_standart[y]
+					ram['bus_stack'][y]['data_standart'] = {}
+					ram['bus_stack'][y]['data_standart'] = data_standart[y]
+					print (new_data)
+					self.data_to_iss(t,y,"sensor",new_data)
+					
 			#ram['bus_stack'][sensor[x]]['sensor_update'] = config['sensors']
-			
+
+		
+		
+		
 		self.Prepare_start()# starting all threads
 		
 		
@@ -139,24 +165,33 @@ class gpio:
 	
 	def Prepare_start(self):#prepare system and start new treahd
 		for x in ram['bus_stack']:
+			print ('HIER ########'+x+'#####################')
 			self.start(x)
 
 
 	def start(self,x):
 		print ("start")
-		
+		print (x)
 		ram['gpio'][x] = {}
-		ram['gpio'][x]['name'] = 'test'		#thread_run = thread_class()
+		ram['gpio'][x]['name'] = x		#thread_run = thread_class()
 		
 		#install = plugin_class[ram['gpio'][name]['name']]
 		config = {} #config data übertragen
 		config['host'] = ic_list['host']
 		config['zone'] = ic_list['zone']
 		config['name'] = ram['gpio'][x]['name']
-		
 		ram['gpio'][x]['queue_in'] = Queue() # Queue erstellen iput from Plugin
 		ram['gpio'][x]['queue_out'] = Queue() # Queue erstellen send data to Plugin 
-		ram['gpio'][x]['prozess'] = Process(target=thread_i2c.run, name=ram['gpio'][x]['name'], args=(config, ram['bus_stack'][x], ram['gpio'][x]['queue_out'], ram['gpio'][x]['queue_in'],logger)) #prozess vorbereiten
+		
+		if x == "i2c":
+			ram['gpio'][x]['prozess'] = Process(target=thread_i2c.run, name=ram['gpio'][x]['name'], args=(config, ram['bus_stack'][x], ram['gpio'][x]['queue_out'], ram['gpio'][x]['queue_in'],logger)) #prozess vorbereiten
+		
+		if x == "gpio":
+			ram['gpio'][x]['prozess'] = Process(target=thread_gpio.run, name=ram['gpio'][x]['name'], args=(config, ram['bus_stack'][x], ram['gpio'][x]['queue_out'], ram['gpio'][x]['queue_in'],logger)) #prozess vorbereiten
+		
+		
+		#ram['gpio'][x]['prozess'] = Process(target=,t.run, name=ram['gpio'][x]['name'], args=(config, ram['bus_stack'][x], ram['gpio'][x]['queue_out'], ram['gpio'][x]['queue_in'],logger)) #prozess vorbereiten
+		#ram['gpio'][x]['prozess'] = Process(target=exec("thread_"+x+".run(config, ram['bus_stack'][x], ram['gpio'][x]['queue_out'], ram['gpio'][x]['queue_in'],logger)"), name=ram['gpio'][x]['name'], )
 		ram['gpio'][x]['prozess'].start() # Prozzes starten
 
 	
@@ -213,11 +248,12 @@ def fake_data():#set fake data to test modul
 	iss[text]['target'] = {}
 	iss[text]['target']['host'] = 'Raspi2'
 	iss[text]['target']['zone'] = 'balkon'
-	iss[text]['target']['name'] = 'demoic'
-	iss[text]['target']['system'] = 'i2c'
+	iss[text]['target']['name'] = 'demomod'
+	iss[text]['target']['system'] = 'gpio'
 	iss[text]['data'] = {}
-	iss[text]['data']['value'] = 1
-	iss[text]['data']['id'] = 1
+	iss[text]['data']['value'] = 0
+	iss[text]['data']['id'] = 13
+	iss[text]['data']['hz'] = 50
 
 
 count = 1
@@ -238,11 +274,11 @@ while True:
 	
 	gpio_handler.comparison()
 	zufall = random.randrange(1,3)
-	if (zufall == 6):
-		print ('FAKE')
-		fake_data()
-	time.sleep(1.1)
-	if count == 5:
+	#if (zufall == 6):
+	print ('FAKE')
+	fake_data()
+	time.sleep(0.5)
+	if count == 4:
 		
 		gpio_handler.comparison()
 		gpio_handler.end()

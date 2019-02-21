@@ -60,15 +60,54 @@ ic_chip[2] ={'icname':'demoic2',
 			'bus':'i2c',
 			'data':{'test':5}
 }
+
+ic_chip[3] ={'icname':'Schalter 0',
+			'bus':'gpio',
+			'data':{'id':12,'typ':'in','test':5}
+}
+
+ic_chip[4] ={'icname':'Schalter 1 up',
+			'bus':'gpio',
+			'data':{'id':5,'typ':'in_up','test':5}
+}
+
+ic_chip[5] ={'icname':'Schalter 2 down',
+			'bus':'gpio',
+			'data':{'id':6,'typ':'in_down','test':5}
+}
+
+
+ic_chip[6] ={'icname':'LED statisch',
+			'bus':'gpio',
+			'data':{'id':13,'typ':'out','value':1}
+}
+
+ic_chip[7] ={'icname':'LED PWM',
+			'bus':'gpio',
+			'data':{'id':19,'value':100,'typ':'pwm',
+					'hz':50
+					}
+}
+
+#Mods müssen als Typ mod gekennzeichnet werden, es wird ein sonder eointrag in eine tablle geschrieben
+ic_chip[8] ={'icname':'demomod',
+			'bus':'gpio',
+			'data':{'id':88,'typ':'demo','mod':'1'
+					}
+}
 			
 sensor[1] = {'name':'demosensor',
 			'sensor_class':'demosensor',
 			'bus':'i2c',
 			'data':{'test':1}
 }
-
-			
 '''
+sensor[2] = {'name':'Licht',
+			'sensor_class':'bh1750',
+			'bus':'i2c',
+			'data':{'adresse':0x23}
+			}
+
 sensordic = {1:[0x23,'options',bh1750(),'licht'],
 2:[0x40,'options',htu21d(),'temperatur_feuchtigkeit']
 }'''
